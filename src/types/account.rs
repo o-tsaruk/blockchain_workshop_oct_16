@@ -1,4 +1,5 @@
-use crate::types::Balance;
+use crate::types::{Balance, PK};
+
 
 #[derive(Debug, Clone)]
 pub enum AccountType {
@@ -10,13 +11,16 @@ pub enum AccountType {
 pub struct Account {
     account_type: AccountType,
     pub(crate) balance: Balance,
+    pub(crate) public_key : PK,
 }
 
 impl Account {
-    pub fn new(account_type: AccountType) -> Self {
+    pub fn new(account_type: AccountType, public_key : PK) -> Self {
         Self {
             account_type,
             balance: 0,
+            public_key,
         }
     }
 }
+

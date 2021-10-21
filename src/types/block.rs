@@ -55,13 +55,20 @@ impl Hashable for Block {
 
 #[cfg(test)]
 mod tests {
+    use ed25519_dalek::Signer;
     use super::*;
     use crate::types::TransactionData;
+    use crate::utils::generate_keypair;
 
     #[test]
     fn test_creation() {
         let mut block = Block::new(None);
-        let tx = Transaction::new(TransactionData::CreateAccount("alice".to_string()), None);
+        let user1_keypair = generate_keypair();
+        let mut tx = Transaction::new(
+            TransactionData::CreateAccount("alice".to_string(), user1_keypair.public.clone()),
+            Some("alice".to_string())
+        );
+        tx.signature = Some(user1_keypair.sign(tx.hash().as_bytes()).to_bytes());
         block.set_nonce(1);
         block.add_transaction(tx);
 
@@ -71,8 +78,12 @@ mod tests {
     #[test]
     fn test_hash() {
         let mut block = Block::new(None);
-        let tx = Transaction::new(TransactionData::CreateAccount("alice".to_string()), None);
-        block.set_nonce(1);
+        let user1_keypair = generate_keypair();
+        let mut tx = Transaction::new(
+            TransactionData::CreateAccount("alice".to_string(), user1_keypair.public.clone()),
+            Some("alice".to_string())
+        );
+        tx.signature = Some(user1_keypair.sign(tx.hash().as_bytes()).to_bytes());
 
         let hash1 = block.hash();
 
