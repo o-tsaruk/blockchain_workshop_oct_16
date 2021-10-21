@@ -15,24 +15,11 @@ pub fn generate_account_id() -> AccountId {
     hex::encode(Blake2s::digest(&seed.to_be_bytes()))
 }
 
-// pub fn append_block(bc: &mut Blockchain, nonce: u128) -> Block {
-//     let mut block = Block::new(bc.get_last_block_hash());
-//     let tx_create_account =
-//         Transaction::new(TransactionData::CreateAccount(generate_account_id()), None);
-//     block.set_nonce(nonce);
-//     block.add_transaction(tx_create_account);
-//     let block_clone = block.clone();
-//
-//     assert!(bc.append_block(block).is_ok());
-//
-//     block_clone
-// }
 pub fn create_block(bc: &mut Blockchain, nonce: u128, user1_id: AccountId) -> Block {
     let mut block = Block::new(bc.get_last_block_hash());
 
     let user1_keypair = generate_keypair();
     let user1_pk = user1_keypair.public;
-    //let user1_id = generate_account_id();
     let mut tx_create_account_user1 =
         Transaction::new(TransactionData::CreateAccount(user1_id.clone(), user1_pk),
                          Some(user1_id.clone()));
