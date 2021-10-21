@@ -46,8 +46,7 @@ impl Transaction {
                 let sender_acc = state.get_account_by_id(sender_id.clone());
 
                 if Transaction::check_tx_create_sign(
-                    self,sender_id.clone(), account_id, pub_key,
-                    sender_acc, self.signature.clone()) {
+                    self,sender_id.clone(), account_id, pub_key, sender_acc, self.signature.clone()) {
 
                     state.create_account(account_id.clone(), AccountType::User, *pub_key)
                 } else { return  Err("Verify signature error!".to_string());}
