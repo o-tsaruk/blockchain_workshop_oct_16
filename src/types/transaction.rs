@@ -137,8 +137,7 @@ impl Transaction {
     fn check_tx_transfer_sign(&self, pub_key: PK, signature: Option<SignatureBytes>) -> bool {
         if signature.is_some() {
             return pub_key
-                        .verify(self.hash().as_bytes(),
-                    &Signature::from(signature.unwrap())).is_ok()
+                        .verify(self.hash().as_bytes(), &Signature::from(signature.unwrap())).is_ok()
         }
 
         false
