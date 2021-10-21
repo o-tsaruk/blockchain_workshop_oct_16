@@ -124,7 +124,6 @@ impl Transaction {
         // if sender account is created by itself
         // or sender account already exist: verify signature
         if (sender_acc.is_none() && (&sender_id == receiver_id)) || sender_acc.is_some() {
-
             return pub_key
                     .verify(self.hash().as_bytes(),
                             &Signature::from(signature.unwrap())).is_ok()
