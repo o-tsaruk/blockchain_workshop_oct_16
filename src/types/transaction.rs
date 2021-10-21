@@ -241,7 +241,7 @@ mod tests {
             Transaction::new(TransactionData::CreateAccount("satoshi".to_string(), user1_pk),
                              Some("satoshi".to_string()));
 
-        let mut tx_mint_init_supply:Transaction = Transaction::new(
+        let tx_mint_init_supply:Transaction = Transaction::new(
             TransactionData::MintInitialSupply {
                 to: "satoshi".to_string(),
                 amount: 100_000_000,
@@ -251,12 +251,9 @@ mod tests {
 
         tx_create_account.signature =
             Some(user1_keypair.sign(tx_create_account.hash().as_bytes()).to_bytes());
-        tx_mint_init_supply.signature =
-            Some(user1_keypair.sign(tx_mint_init_supply.hash().as_bytes()).to_bytes());
-
 
         assert!(
-            append_block_with_tx(bc, 1, vec![tx_create_account.clone()]).is_ok()
+            append_block_with_tx(bc, 1, vec![tx_create_account.clone(), tx_mint_init_supply.clone()],).is_ok()
         );
 
         let tx_transfer1 = Transaction::new(
