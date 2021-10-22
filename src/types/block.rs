@@ -2,10 +2,12 @@ use crate::traits::Hashable;
 use crate::types::{Hash, Transaction};
 use blake2::digest::FixedOutput;
 use blake2::{Blake2s, Digest};
+use crate::utils::generate_timestamp;
 
 #[derive(Default, Debug, Clone)]
 pub struct Block {
     nonce: u128,
+    pub(crate) timestamp: u64,
     pub(crate) hash: Option<Hash>,
     pub(crate) prev_hash: Option<Hash>,
     pub(crate) transactions: Vec<Transaction>,
@@ -17,6 +19,7 @@ impl Block {
             prev_hash,
             ..Default::default()
         };
+        block.timestamp = generate_timestamp();
         block.update_hash();
 
         block
@@ -57,22 +60,26 @@ impl Hashable for Block {
 mod tests {
     use ed25519_dalek::Signer;
     use super::*;
-    use crate::types::TransactionData;
-    use crate::utils::generate_keypair;
+    use crate::types::{Blockchain, TransactionData};
+    use crate::utils::{generate_keypair, mining};
 
     #[test]
     fn test_creation() {
+        let bc = &mut Blockchain::new();
         let mut block = Block::new(None);
         let user1_keypair = generate_keypair();
         let mut tx = Transaction::new(
             TransactionData::CreateAccount("alice".to_string(), user1_keypair.public.clone()),
             Some("alice".to_string())
         );
+
         tx.signature = Some(user1_keypair.sign(tx.hash().as_bytes()).to_bytes());
-        block.set_nonce(1);
         block.add_transaction(tx);
 
-        dbg!(block);
+        assert!(mining(&mut block, bc).is_ok());
+
+        dbg!(block.clone());
+        assert!(bc.append_block(block.clone()).is_ok());
     }
 
     #[test]

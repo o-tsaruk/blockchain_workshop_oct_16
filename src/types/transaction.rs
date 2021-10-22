@@ -166,7 +166,7 @@ mod tests {
     use ed25519_dalek::{Signer};
     use crate::traits::{Hashable, WorldState};
     use crate::types::{Block, Blockchain, Transaction, TransactionData};
-    use crate::utils::{append_block_with_tx, create_block, create_block_and_tx, generate_account_id, generate_keypair};
+    use crate::utils::{append_block_with_tx, create_block, create_block_and_tx, generate_account_id, generate_keypair, mining};
 
     #[test]
     fn test_account_creating() {
@@ -183,8 +183,9 @@ mod tests {
         tx_create_account_user1.signature =
             Some(user1_keypair.sign(tx_create_account_user1.hash().as_bytes()).to_bytes());
 
-        block.set_nonce(1);
         block.add_transaction(tx_create_account_user1.clone());
+        assert!(mining(&mut block, bc).is_ok());
+
         assert!(bc.append_block(block.clone()).is_ok());
 
         let test_user = bc.get_account_by_id(user1_id.clone());
@@ -200,7 +201,7 @@ mod tests {
         let user2_id = generate_account_id();
 
         let block= create_block_and_tx(
-            bc,1,vec![1000,10],90, user1_id.clone(), user2_id.clone());
+            bc,vec![1000,10],90, user1_id.clone(), user2_id.clone());
 
         assert!(bc.append_block(block.clone()).is_ok());
 
@@ -215,7 +216,7 @@ mod tests {
     #[test]
     fn test_sender_doesnt_exist() {
         let bc = &mut Blockchain::new();
-        let block = create_block(bc, 1, "satoshi".to_string());
+        let block = create_block(bc, "satoshi".to_string());
         assert!(bc.append_block(block.clone()).is_ok());
 
         let tx_transfer1 = Transaction::new(
@@ -227,7 +228,7 @@ mod tests {
         );
 
         assert!(
-            append_block_with_tx(bc, 1, vec![tx_transfer1.clone()]).is_err()
+            append_block_with_tx(bc, vec![tx_transfer1.clone()]).is_err()
         );
     }
 
@@ -253,7 +254,7 @@ mod tests {
             Some(user1_keypair.sign(tx_create_account.hash().as_bytes()).to_bytes());
 
         assert!(
-            append_block_with_tx(bc, 1, vec![tx_create_account.clone(), tx_mint_init_supply.clone()],).is_ok()
+            append_block_with_tx(bc, vec![tx_create_account.clone(), tx_mint_init_supply.clone()],).is_ok()
         );
 
         let tx_transfer1 = Transaction::new(
@@ -265,7 +266,7 @@ mod tests {
         );
 
         assert!(
-            append_block_with_tx(bc, 1, vec![tx_transfer1.clone()]).is_err()
+            append_block_with_tx(bc, vec![tx_transfer1.clone()]).is_err()
         );
      }
 
@@ -276,7 +277,7 @@ mod tests {
         let user2_id = generate_account_id();
 
         let block= create_block_and_tx(
-            bc,1,vec![1000,10],2000, user1_id.clone(), user2_id.clone());
+            bc,vec![1000,10],2000, user1_id.clone(), user2_id.clone());
 
         assert!(bc.append_block(block.clone()).is_err());
     }
@@ -293,19 +294,19 @@ mod tests {
                              Some(user1_id.clone()));
 
         assert!(
-            append_block_with_tx(bc, 1, vec![tx_create_account_user1.clone()]).is_err()
+            append_block_with_tx(bc, vec![tx_create_account_user1.clone()]).is_err()
         );
 
         tx_create_account_user1.signature =
             Some(user1_keypair.sign("hello".as_bytes()).to_bytes());
         assert!(
-            append_block_with_tx(bc, 1, vec![tx_create_account_user1.clone()]).is_err()
+            append_block_with_tx(bc, vec![tx_create_account_user1.clone()]).is_err()
         );
 
         tx_create_account_user1.signature =
             Some(user1_keypair.sign(tx_create_account_user1.hash().as_bytes()).to_bytes());
         assert!(
-            append_block_with_tx(bc, 1, vec![tx_create_account_user1.clone()]).is_ok()
+            append_block_with_tx(bc, vec![tx_create_account_user1.clone()]).is_ok()
         );
     }
 
