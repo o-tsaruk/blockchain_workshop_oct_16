@@ -156,27 +156,27 @@ mod tests {
     }
 
     // Probability of long-term execution
-    // #[test]
-    // fn test_create() {
-    //     let bc = &mut Blockchain::new();
-    //
-    //     let mut block1 = create_block_and_tx(bc, vec![10,0], 5,
-    //                                      "bob".to_string(), "alice".to_string());
-    //
-    //     assert!(bc.append_block(block1.clone()).is_ok());
-    //
-    //     let mut block2 = create_block(bc,generate_account_id());
-    //     assert!(bc.append_block(block2.clone()).is_ok());
-    //
-    //     let mut block3 = create_block(bc,generate_account_id());
-    //     assert!(bc.append_block(block3.clone()).is_ok());
-    //
-    //     assert_eq!(bc.get_last_block_hash(), block3.hash.clone());
-    //     assert!(bc.validate().is_ok());
-    //     dbg!(block1.hash);
-    //     dbg!(block2.hash);
-    //     dbg!(block3.hash);
-    // }
+    #[test]
+    fn test_create() {
+        let bc = &mut Blockchain::new();
+
+        let mut block1 = create_block_and_tx(bc, vec![10,0], 5,
+                                         "bob".to_string(), "alice".to_string());
+
+        assert!(bc.append_block(block1.clone()).is_ok());
+
+        let mut block2 = create_block(bc,generate_account_id());
+        assert!(bc.append_block(block2.clone()).is_ok());
+
+        let mut block3 = create_block(bc,generate_account_id());
+        assert!(bc.append_block(block3.clone()).is_ok());
+
+        assert_eq!(bc.get_last_block_hash(), block3.hash.clone());
+        assert!(bc.validate().is_ok());
+        dbg!(block1.hash);
+        dbg!(block2.hash);
+        dbg!(block3.hash);
+    }
 
     #[test]
     fn test_create_genesis_block() {
@@ -295,49 +295,49 @@ mod tests {
     }
 
     // Probability of long-term execution
-    // #[test]
-    // fn test_validate() {
-    //     let bc = &mut Blockchain::new();
-    //
-    //     let user1_keypair = generate_keypair();
-    //     let user1_pk = user1_keypair.public;
-    //     let user1_id = generate_account_id();
-    //
-    //     let mut tx_create_account =
-    //         Transaction::new(TransactionData::CreateAccount(user1_id.clone(), user1_pk),
-    //                      Some(user1_id.clone()));
-    //
-    //     let tx_mint_init_supply:Transaction = Transaction::new(
-    //         TransactionData::MintInitialSupply {
-    //             to: user1_id.clone(),
-    //             amount: 100_000_000,
-    //         },
-    //     None,
-    //     );
-    //
-    //     tx_create_account.signature =
-    //         Some(user1_keypair.sign(tx_create_account.hash().as_bytes()).to_bytes());
-    //
-    //     assert!(
-    //         append_block_with_tx(bc, vec![tx_create_account, tx_mint_init_supply]).is_ok()
-    //     );
-    //
-    //     let block1 = create_block(bc, generate_account_id());
-    //     assert!(bc.append_block(block1.clone()).is_ok());
-    //     let block2 = create_block(bc, generate_account_id());
-    //     assert!(bc.append_block(block2.clone()).is_ok());
-    //
-    //     assert!(bc.validate().is_ok());
-    //
-    //     let mut iter = bc.blocks.iter_mut();
-    //     iter.next();
-    //     iter.next();
-    //     let block = iter.next().unwrap();
-    //     block.transactions[1].data = TransactionData::MintInitialSupply {
-    //         to: user1_id.clone(),
-    //         amount: 100,
-    //     };
-    //
-    //     assert!(bc.validate().is_err());
-    // }
+    #[test]
+    fn test_validate() {
+        let bc = &mut Blockchain::new();
+
+        let user1_keypair = generate_keypair();
+        let user1_pk = user1_keypair.public;
+        let user1_id = generate_account_id();
+
+        let mut tx_create_account =
+            Transaction::new(TransactionData::CreateAccount(user1_id.clone(), user1_pk),
+                         Some(user1_id.clone()));
+
+        let tx_mint_init_supply:Transaction = Transaction::new(
+            TransactionData::MintInitialSupply {
+                to: user1_id.clone(),
+                amount: 100_000_000,
+            },
+        None,
+        );
+
+        tx_create_account.signature =
+            Some(user1_keypair.sign(tx_create_account.hash().as_bytes()).to_bytes());
+
+        assert!(
+            append_block_with_tx(bc, vec![tx_create_account, tx_mint_init_supply]).is_ok()
+        );
+
+        let block1 = create_block(bc, generate_account_id());
+        assert!(bc.append_block(block1.clone()).is_ok());
+        let block2 = create_block(bc, generate_account_id());
+        assert!(bc.append_block(block2.clone()).is_ok());
+
+        assert!(bc.validate().is_ok());
+
+        let mut iter = bc.blocks.iter_mut();
+        iter.next();
+        iter.next();
+        let block = iter.next().unwrap();
+        block.transactions[1].data = TransactionData::MintInitialSupply {
+            to: user1_id.clone(),
+            amount: 100,
+        };
+
+        assert!(bc.validate().is_err());
+    }
 }
