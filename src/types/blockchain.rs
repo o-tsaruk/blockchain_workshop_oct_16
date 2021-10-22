@@ -79,8 +79,8 @@ impl Blockchain {
         if !is_genesis {
             let actual = block.timestamp.clone() - self.last_timestamp.clone();
             let mut ratio: f64 = (actual as f64)/EXPECTED_TIME;
-            if ratio < 0.25 {
-                ratio = 0.25;
+            if ratio < 0.95 {
+                ratio = 0.95;
             } else if ratio > 4.0 {
                 ratio = 4.0;
             }
