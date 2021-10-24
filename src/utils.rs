@@ -1,5 +1,5 @@
 use std::time::{SystemTime, UNIX_EPOCH};
-use crate::types::{AccountId, Balance, Block, Blockchain, Error, Hash, Target, Transaction, TransactionData};
+use crate::types::{AccountId, Balance, Block, Blockchain, COEFFICIENT_LENGTH, Error, Hash, Target, Transaction, TransactionData};
 use blake2::{Blake2s, Digest};
 use ed25519_dalek::{Keypair, Signer};
 use rand::Rng;
@@ -27,7 +27,7 @@ pub fn generate_timestamp() -> u64 {
 
 pub fn hash_to_bits(hash: Hash) -> Hash {
     let mut exponent = String::new();    // size of the hash in bytes
-    let coefficient;                      // initial 3 bytes of the hash
+    let coefficient: &str;                      // initial 3 bytes of the hash
     let mut result = String::new();      // 8 digits (4 bytes) long
 
     let beginning = find_beginning_of_hash(hash.clone());
@@ -41,7 +41,7 @@ pub fn hash_to_bits(hash: Hash) -> Hash {
     let number_of_bytes = new_hash.len()/2;
     exponent = hex::encode(vec![number_of_bytes as u8]);
 
-    coefficient = &new_hash[..6];  // 3 bytes = 6 digits in hex
+    coefficient = &new_hash[..COEFFICIENT_LENGTH];  // 3 bytes = 6 digits in hex
     result += exponent.as_str();
     result += coefficient;
 

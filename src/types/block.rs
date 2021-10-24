@@ -1,5 +1,5 @@
 use crate::traits::Hashable;
-use crate::types::{Hash, Transaction};
+use crate::types::{Hash, Timestamp, Transaction};
 use blake2::digest::FixedOutput;
 use blake2::{Blake2s, Digest};
 use crate::utils::generate_timestamp;
@@ -7,7 +7,7 @@ use crate::utils::generate_timestamp;
 #[derive(Default, Debug, Clone)]
 pub struct Block {
     nonce: u128,
-    pub(crate) timestamp: u64,
+    pub(crate) timestamp: Timestamp,
     pub(crate) hash: Option<Hash>,
     pub(crate) prev_hash: Option<Hash>,
     pub(crate) transactions: Vec<Transaction>,

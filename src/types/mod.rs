@@ -22,5 +22,7 @@ pub type Target = u64;
 
 // for first block
 // 0x00fffff000000000000000000000000000000000000000000000000000000000 => 0x1ffffff0
+pub const MAX_COMPACT_FORM: &'static str = "1ffffff0";
 pub const MAX_TARGET: Target = 536_870_896;
 pub const EXPECTED_TIME: f64 = 1.5;
+pub const COEFFICIENT_LENGTH: usize = 6;

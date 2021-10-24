@@ -1,5 +1,5 @@
 use crate::traits::{Hashable, WorldState};
-use crate::types::{Account, AccountId, AccountType, Block, Chain, Error, EXPECTED_TIME, Hash, MAX_TARGET, PK, Target, Timestamp, Transaction};
+use crate::types::{Account, AccountId, AccountType, Block, Chain, COEFFICIENT_LENGTH, Error, EXPECTED_TIME, Hash, MAX_COMPACT_FORM, MAX_TARGET, PK, Target, Timestamp, Transaction};
 use std::collections::hash_map::Entry;
 use std::collections::{HashMap};
 use crate::utils::check_target;
@@ -9,8 +9,9 @@ pub struct Blockchain {
     blocks: Chain<Block>,
     accounts: HashMap<AccountId, Account>,
     transaction_pool: Vec<Transaction>,
-    pub(crate) current_target: Target,
     last_timestamp: Timestamp,
+    pub(crate) current_target: Target,
+    pub(crate) compact_form: String,
 }
 
 impl WorldState for Blockchain {
@@ -44,6 +45,7 @@ impl Blockchain {
             ..Default::default()
         };
         bc.current_target = MAX_TARGET;
+        bc.compact_form = MAX_COMPACT_FORM.to_string();
 
         bc
     }
@@ -77,20 +79,7 @@ impl Blockchain {
 
         // TODO Task 3: Append block only if block.hash < target
         if !is_genesis {
-            let actual = block.timestamp.clone() - self.last_timestamp.clone();
-            let mut ratio: f64 = (actual as f64)/EXPECTED_TIME;
-            if ratio < 0.95 {
-                ratio = 0.95;
-            } else if ratio > 4.0 {
-                ratio = 4.0;
-            }
-
-            let new_target: f64 = (self.current_target as f64) * ratio;
-            if new_target.ceil() >= (MAX_TARGET as f64) {
-                self.current_target = MAX_TARGET;
-            } else {
-                self.current_target = new_target.ceil() as u64;
-            }
+            Blockchain::target_adjust(self, block.timestamp.clone());
         }
 
         self.last_timestamp = block.timestamp;
@@ -140,6 +129,53 @@ impl Blockchain {
         self.blocks.head().map(|block| block.hash())
     }
 
+    fn target_adjust(&mut self, block_timestamp: Timestamp) {
+        let actual = block_timestamp - self.last_timestamp.clone();
+        let mut ratio: f64 = (actual as f64)/EXPECTED_TIME;
+        if ratio < 0.25 {
+            ratio = 0.25;
+        } else if ratio > 4.0 {
+            ratio = 4.0;
+        }
+
+        let start_exp = &self.compact_form[..2];      // exponent
+        let start_coef  = &self.compact_form[2..];    // coefficient
+        let dec_exp = u64::from_str_radix(start_exp, 16);
+        let dec_coef = u64::from_str_radix(start_coef, 16);
+        let mut dec_new_coef: f64 = (dec_coef.unwrap() as f64) * ratio;
+
+        let new_compact_form =
+            Blockchain::check_target_adjust(dec_exp.unwrap(), dec_new_coef, start_coef, ratio);
+        let new_target = u64::from_str_radix(&new_compact_form, 16);
+
+        if new_target.clone().unwrap() >= MAX_TARGET {
+            self.current_target = MAX_TARGET;
+            self.compact_form = MAX_COMPACT_FORM.to_string();
+        } else {
+            self.current_target = new_target.unwrap();
+            self.compact_form = new_compact_form;
+        }
+    }
+
+    fn check_target_adjust(dec_exp: u64, mut dec_new_coef: f64, start_coef: &str, ratio: f64) -> String {
+        if (start_coef.chars().nth(2).unwrap() == '0') && (ratio < 1.0)  {
+            dec_new_coef *= 16.0;
+        }
+
+        let mut hex_new_coef = format!("{:x}", dec_new_coef.clone().ceil() as i64);
+        let mut dec_new_exp: u64 = dec_exp;
+        if hex_new_coef.len() == COEFFICIENT_LENGTH-1 {
+            hex_new_coef += "0";
+            dec_new_exp -= 1;
+        }
+        else if hex_new_coef.len() > COEFFICIENT_LENGTH {
+            hex_new_coef = "0".to_owned() + &hex_new_coef[..COEFFICIENT_LENGTH-1].to_string();
+            dec_new_exp += 1;
+        }
+
+        hex::encode(vec![dec_new_exp as u8]) + &hex_new_coef
+    }
+
 }
 
 #[cfg(test)]
@@ -155,7 +191,6 @@ mod tests {
         assert_eq!(bc.get_last_block_hash(), None);
     }
 
-    // Probability of long-term execution
     #[test]
     fn test_create() {
         let bc = &mut Blockchain::new();
@@ -294,7 +329,6 @@ mod tests {
         assert!(bc.get_account_by_id(bob_id.clone()).is_none());
     }
 
-    // Probability of long-term execution
     #[test]
     fn test_validate() {
         let bc = &mut Blockchain::new();
