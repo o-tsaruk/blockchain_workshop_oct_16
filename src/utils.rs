@@ -1,9 +1,8 @@
 use std::time::{SystemTime, UNIX_EPOCH};
-use crate::types::{AccountId, Balance, Block, Blockchain, COEFFICIENT_LENGTH, Error, Hash, Target, Transaction, TransactionData};
+use crate::types::{AccountId, Block, Blockchain, COEFFICIENT_LENGTH, Error, Hash, Target};
 use blake2::{Blake2s, Digest};
-use ed25519_dalek::{Keypair, Signer};
+use ed25519_dalek::{Keypair};
 use rand::Rng;
-use crate::traits::Hashable;
 
 pub fn generate_keypair() -> Keypair {
     Keypair::generate(&mut rand::rngs::OsRng {})
@@ -26,12 +25,12 @@ pub fn generate_timestamp() -> u64 {
 }
 
 pub fn hash_to_bits(hash: Hash) -> Hash {
-    let mut exponent = String::new();    // size of the hash in bytes
+    let exponent;    // size of the hash in bytes
     let coefficient: &str;                      // initial 3 bytes of the hash
     let mut result = String::new();      // 8 digits (4 bytes) long
 
     let beginning = find_beginning_of_hash(hash.clone());
-    let mut new_hash= String::new();
+    let mut new_hash;
     new_hash = hash[beginning..].to_string();
 
     if new_hash.len() % 2 != 0 {
@@ -81,103 +80,6 @@ pub fn mining(block: &mut Block, bc: &Blockchain) -> Result<(), Error> {
     }
 
     Ok(())
-}
-
-// functions for tests
-pub fn create_block(bc: &mut Blockchain, user1_id: AccountId) -> Block {
-    let mut block = Block::new(bc.get_last_block_hash());
-
-    let user1_keypair = generate_keypair();
-    let user1_pk = user1_keypair.public;
-    let mut tx_create_account_user1 =
-        Transaction::new(TransactionData::CreateAccount(user1_id.clone(), user1_pk),
-                         Some(user1_id.clone()));
-
-    tx_create_account_user1.signature =
-        Some(user1_keypair.sign(tx_create_account_user1.hash().as_bytes()).to_bytes());
-
-    block.add_transaction(tx_create_account_user1.clone());
-
-    mining(&mut block, bc);
-
-    block.clone()
-}
-
-pub fn create_block_and_tx(bc: &mut Blockchain, mint_amount: Vec<Balance>, tx_amount: Balance,
-    user1_id: AccountId, user2_id: AccountId) -> Block {
-
-    let mut block = Block::new(bc.get_last_block_hash());
-    let user1_keypair = generate_keypair();
-    let user1_pk = user1_keypair.public;
-
-    let mut tx_create_account_user1 =
-        Transaction::new(TransactionData::CreateAccount(user1_id.clone(), user1_pk),
-                         Some(user1_id.clone()));
-
-    let tx_mint_init_supply_user1:Transaction = Transaction::new(
-        TransactionData::MintInitialSupply {
-            to: user1_id.clone(),
-            amount: mint_amount[0],
-        },
-        None,
-    );
-
-    tx_create_account_user1.signature =
-        Some(user1_keypair.sign(tx_create_account_user1.hash().as_bytes()).to_bytes());
-
-    let user2_keypair = generate_keypair();
-    let user2_pk = user2_keypair.public;
-
-    let mut tx_create_account_user2 =
-        Transaction::new(TransactionData::CreateAccount(user2_id.clone(), user2_pk),
-                         Some(user2_id.clone()));
-
-    let tx_mint_init_supply_user2:Transaction = Transaction::new(
-        TransactionData::MintInitialSupply {
-            to: user2_id.clone(),
-            amount: mint_amount[1],
-        },
-        None,
-    );
-
-    tx_create_account_user2.signature =
-        Some(user2_keypair.sign(tx_create_account_user2.hash().as_bytes()).to_bytes());
-
-    let mut tx_transfer1 = Transaction::new(
-        TransactionData::Transfer {
-            to: user2_id.clone(),
-            amount: tx_amount,
-        },
-        Some(user1_id.clone()),
-    );
-
-    tx_transfer1.signature =
-        Some(user1_keypair.sign(tx_transfer1.hash().as_bytes()).to_bytes());
-
-    block.add_transaction(tx_create_account_user1.clone());
-    block.add_transaction(tx_mint_init_supply_user1.clone());
-    block.add_transaction(tx_create_account_user2.clone());
-    block.add_transaction(tx_mint_init_supply_user2.clone());
-    block.add_transaction(tx_transfer1.clone());
-
-    assert!(mining(&mut block, bc).is_ok());
-
-    block.clone()
-}
-
-pub fn append_block_with_tx(
-    bc: &mut Blockchain,
-    transactions: Vec<Transaction>,
-) -> Result<(), Error> {
-    let mut block = Block::new(bc.get_last_block_hash());
-
-    for tx in transactions {
-        block.add_transaction(tx);
-    }
-
-    assert!(mining(&mut block, bc).is_ok());
-
-    bc.append_block(block)
 }
 
 #[cfg(test)]

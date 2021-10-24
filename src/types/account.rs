@@ -10,8 +10,8 @@ pub enum AccountType {
 #[derive(Debug, Clone)]
 pub struct Account {
     account_type: AccountType,
-    pub(crate) balance: Balance,
-    pub(crate) public_key : PK,
+    pub balance: Balance,
+    pub public_key : PK,
 }
 
 impl Account {

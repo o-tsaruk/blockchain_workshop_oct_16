@@ -8,9 +8,9 @@ use crate::utils::generate_timestamp;
 pub struct Block {
     nonce: u128,
     pub(crate) timestamp: Timestamp,
-    pub(crate) hash: Option<Hash>,
+    pub hash: Option<Hash>,
     pub(crate) prev_hash: Option<Hash>,
-    pub(crate) transactions: Vec<Transaction>,
+    pub transactions: Vec<Transaction>,
 }
 
 impl Block {
@@ -53,51 +53,5 @@ impl Hashable for Block {
         }
 
         hex::encode(hasher.finalize_fixed())
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use ed25519_dalek::Signer;
-    use super::*;
-    use crate::types::{Blockchain, TransactionData};
-    use crate::utils::{generate_keypair, mining};
-
-    #[test]
-    fn test_creation() {
-        let bc = &mut Blockchain::new();
-        let mut block = Block::new(None);
-        let user1_keypair = generate_keypair();
-        let mut tx = Transaction::new(
-            TransactionData::CreateAccount("alice".to_string(), user1_keypair.public.clone()),
-            Some("alice".to_string())
-        );
-
-        tx.signature = Some(user1_keypair.sign(tx.hash().as_bytes()).to_bytes());
-        block.add_transaction(tx);
-
-        assert!(mining(&mut block, bc).is_ok());
-
-        dbg!(block.clone());
-        assert!(bc.append_block(block.clone()).is_ok());
-    }
-
-    #[test]
-    fn test_hash() {
-        let mut block = Block::new(None);
-        let user1_keypair = generate_keypair();
-        let mut tx = Transaction::new(
-            TransactionData::CreateAccount("alice".to_string(), user1_keypair.public.clone()),
-            Some("alice".to_string())
-        );
-        tx.signature = Some(user1_keypair.sign(tx.hash().as_bytes()).to_bytes());
-
-        let hash1 = block.hash();
-
-        block.add_transaction(tx);
-        block.set_nonce(1);
-        let hash2 = block.hash();
-
-        assert_ne!(hash1, hash2);
     }
 }

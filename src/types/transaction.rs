@@ -1,5 +1,5 @@
 use crate::traits::{Hashable, WorldState};
-use crate::types::{Account, AccountId, AccountType, Balance, Error, Hash, PK, SignatureBytes, Timestamp};
+use crate::types::{AccountId, AccountType, Balance, Error, Hash, PK, SignatureBytes, Timestamp};
 use blake2::digest::FixedOutput;
 use blake2::{Blake2s, Digest};
 use ed25519_dalek::{Signature, Verifier};
@@ -10,8 +10,8 @@ pub struct Transaction {
     nonce: u128,
     timestamp: Timestamp,
     from: Option<AccountId>,
-    pub(crate) data: TransactionData,
-    pub(crate) signature: Option<SignatureBytes>,
+    pub data: TransactionData,
+    pub signature: Option<SignatureBytes>,
 }
 
 #[derive(Debug, Clone)]
@@ -172,156 +172,4 @@ impl Hashable for Transaction {
 
         hex::encode(hasher.finalize_fixed())
     }
-}
-
-
-#[cfg(test)]
-mod tests {
-    use ed25519_dalek::{Signer};
-    use crate::traits::{Hashable, WorldState};
-    use crate::types::{Block, Blockchain, Transaction, TransactionData};
-    use crate::utils::{append_block_with_tx, create_block, create_block_and_tx, generate_account_id, generate_keypair, mining};
-
-    #[test]
-    fn test_account_creating() {
-        let bc = &mut Blockchain::new();
-        let mut block = Block::new(None);
-
-        let user1_keypair = generate_keypair();
-        let user1_pk = user1_keypair.public;
-        let user1_id = generate_account_id();
-        let mut tx_create_account_user1 =
-            Transaction::new(TransactionData::CreateAccount(user1_id.clone(), user1_pk),
-                             Some(user1_id.clone()));
-
-        tx_create_account_user1.signature =
-            Some(user1_keypair.sign(tx_create_account_user1.hash().as_bytes()).to_bytes());
-
-        block.add_transaction(tx_create_account_user1.clone());
-        assert!(mining(&mut block, bc).is_ok());
-
-        assert!(bc.append_block(block.clone()).is_ok());
-
-        let test_user = bc.get_account_by_id(user1_id.clone());
-        assert!(test_user.is_some());
-        assert_eq!(test_user.unwrap().public_key, user1_pk);
-        dbg!(block.clone());
-    }
-
-    #[test]
-    fn test_accounts_exist() {
-        let bc = &mut Blockchain::new();
-        let user1_id = generate_account_id();
-        let user2_id = generate_account_id();
-
-        let block= create_block_and_tx(
-            bc,vec![1000,10],90, user1_id.clone(), user2_id.clone());
-
-        assert!(bc.append_block(block.clone()).is_ok());
-
-        let test_user1 = bc.get_account_by_id(user1_id.clone());
-        let test_user2 = bc.get_account_by_id(user2_id.clone());
-        assert!(test_user1.is_some());
-        assert!(test_user2.is_some());
-        assert_eq!(test_user1.unwrap().balance, 910);
-        assert_eq!(test_user2.unwrap().balance, 100);
-    }
-
-    #[test]
-    fn test_sender_doesnt_exist() {
-        let bc = &mut Blockchain::new();
-        let block = create_block(bc, "satoshi".to_string());
-        assert!(bc.append_block(block.clone()).is_ok());
-
-        let tx_transfer1 = Transaction::new(
-        TransactionData::Transfer {
-            to: "satoshi".to_string(),
-            amount: 100,
-        },
-        Some("alice".to_string()),
-        );
-
-        assert!(
-            append_block_with_tx(bc, vec![tx_transfer1.clone()]).is_err()
-        );
-    }
-
-    #[test]
-    fn test_receiver_doesnt_exist() {
-        let bc = &mut Blockchain::new();
-        let user1_keypair = generate_keypair();
-        let user1_pk = user1_keypair.public;
-
-        let mut tx_create_account =
-            Transaction::new(TransactionData::CreateAccount("satoshi".to_string(), user1_pk),
-                             Some("satoshi".to_string()));
-
-        let tx_mint_init_supply:Transaction = Transaction::new(
-            TransactionData::MintInitialSupply {
-                to: "satoshi".to_string(),
-                amount: 100_000_000,
-            },
-        None,
-        );
-
-        tx_create_account.signature =
-            Some(user1_keypair.sign(tx_create_account.hash().as_bytes()).to_bytes());
-
-        assert!(
-            append_block_with_tx(bc, vec![tx_create_account.clone(), tx_mint_init_supply.clone()],).is_ok()
-        );
-
-        let tx_transfer1 = Transaction::new(
-        TransactionData::Transfer {
-            to: "alice".to_string(),
-            amount: 100,
-        },
-        Some("satoshi".to_string()),
-        );
-
-        assert!(
-            append_block_with_tx(bc, vec![tx_transfer1.clone()]).is_err()
-        );
-     }
-
-    #[test]
-    fn test_not_enough_money() {
-        let bc = &mut Blockchain::new();
-        let user1_id = generate_account_id();
-        let user2_id = generate_account_id();
-
-        let block= create_block_and_tx(
-            bc,vec![1000,10],2000, user1_id.clone(), user2_id.clone());
-
-        assert!(bc.append_block(block.clone()).is_err());
-    }
-
-    #[test]
-    fn test_invalid_signature() {
-        let bc = &mut Blockchain::new();
-
-        let user1_keypair = generate_keypair();
-        let user1_pk = user1_keypair.public;
-        let user1_id = generate_account_id();
-        let mut tx_create_account_user1 =
-            Transaction::new(TransactionData::CreateAccount(user1_id.clone(), user1_pk),
-                             Some(user1_id.clone()));
-
-        assert!(
-            append_block_with_tx(bc, vec![tx_create_account_user1.clone()]).is_err()
-        );
-
-        tx_create_account_user1.signature =
-            Some(user1_keypair.sign("hello".as_bytes()).to_bytes());
-        assert!(
-            append_block_with_tx(bc, vec![tx_create_account_user1.clone()]).is_err()
-        );
-
-        tx_create_account_user1.signature =
-            Some(user1_keypair.sign(tx_create_account_user1.hash().as_bytes()).to_bytes());
-        assert!(
-            append_block_with_tx(bc, vec![tx_create_account_user1.clone()]).is_ok()
-        );
-    }
-
 }
