@@ -1,5 +1,6 @@
 use crate::traits::{Hashable, WorldState};
-use crate::types::{Account, AccountId, AccountType, Block, Chain, COEFFICIENT_LENGTH, Error, EXPECTED_TIME, Hash, MAX_COMPACT_FORM, MAX_TARGET, PK, Target, Timestamp, Transaction};
+use crate::types::{Account, AccountId, AccountType, Block, Chain, COEFFICIENT_LENGTH, Error,
+                   EXPECTED_TIME, Hash, MAX_COMPACT_FORM, MAX_TARGET, PK, Target, Timestamp, Transaction};
 use std::collections::hash_map::Entry;
 use std::collections::{HashMap};
 use crate::utils::check_target;
