@@ -80,8 +80,6 @@ pub fn mining(block: &mut Block, bc: &Blockchain) -> Result<(), Error> {
         block.set_nonce(nonce.clone());
     }
 
-    dbg!(bc.current_target.clone());
-    dbg!(block.hash.clone().unwrap());
     Ok(())
 }
 

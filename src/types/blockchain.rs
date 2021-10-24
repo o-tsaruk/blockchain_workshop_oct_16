@@ -55,7 +55,6 @@ impl Blockchain {
     }
 
     pub fn append_block(&mut self, block: Block) -> Result<(), Error> {
-        //TODO Task 3: Implement mining
         if !block.verify() {
             return Err("Block has invalid hash".to_string());
         }
@@ -77,7 +76,6 @@ impl Blockchain {
             }
         }
 
-        // TODO Task 3: Append block only if block.hash < target
         if !is_genesis {
             Blockchain::target_adjust(self, block.timestamp.clone());
         }
